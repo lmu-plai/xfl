@@ -120,7 +120,6 @@ class Experiment():
     def gen_settings(self):
         ML_NAME_VEC_DIM = 8192 + 4096
         self.logger.debug("Generating experiment settings for current configuration! This may take some time.")
-        #self.parseFastTextvecFile(self.config.desyl + '/res/model.vec')
         self.pdb.connect()
         curr = self.pdb.cursor()
         for name, key, group in [
@@ -561,7 +560,7 @@ class Result():
 
 class CCSResult(Result):
     """
-        Result for CCS 2021 paper submission
+        Classification Experiment Result
     """
     def __init__(self, config:Config, store:dict, tool:str, pretrained:bool, label_size:int, train_set:str, test_set:str, date:datetime=datetime.now()):
         self.tstr   = date.isoformat(timespec='minutes') 

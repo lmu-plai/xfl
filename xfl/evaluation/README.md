@@ -1,3 +1,7 @@
 # Pretrained DEXTER embeddings
 
-You may download pre-trained DEXTER embeddings used in our experiments [here](http://ec2-34-254-193-199.eu-west-1.compute.amazonaws.com/dexter_embeddings.csv.gz).
+Our experiment data is too large to host on Github. Therefore, we make pre-trained DEXTER embeddings for our dataset available from the following [link](http://ec2-34-254-193-199.eu-west-1.compute.amazonaws.com/dexter_embeddings.csv.gz).
+
+Secondly, a pandas dataframe from our experiments with raw feature values is available from the following [link](http://ec2-34-254-193-199.eu-west-1.compute.amazonaws.com/dexter_expr_data.pickle).
+
+
