@@ -7,6 +7,9 @@ This repository will contain the code accompanying the paper [_XFL: Naming Funct
 The repository currently contains the following components:
 
 * `lm/` Language model for generation function names from lists of predicted tokens
+* `xfl/` Partial source code and full experiment data used in our paper
+
+To generate embeddings from symbols in binaries as a service, please use the [reait](https://github.com/RevEngAI/reait) tool.
 
 
 ## Citation
