@@ -1,25 +1,41 @@
-import os, sys
-# external regex library, supports overlapping
+import os
+import sys
+#3rd party regex library
 import regex as re
-import enchant, functools, itertools
-import nltk, math, copy
+import enchant
+import functools
+import itertools
+import nltk
+import math
+import copy
 from nltk.corpus import wordnet as wn
 from threading import Lock
 from intervaltree import Interval, IntervalTree
 import numpy as np
 import itertools
 from functools import reduce
-from IPython import embed
+import logging
 
-import context
-import classes.utils
-import classes.config
 
-class NLP:
+class SymbolNLP:
+    """
+    Class for processing symbol names
+    SymbolNLP.canonical_set(fname) -> set of labels
+    """
 
-    def __init__(self, config):
-        classes.utils._desyl_init_class_(self, config)
+    def __init__(self):
         self.enchant_lock = Lock()
+        self.logger = logging.Logger('SymbolNLP')
+
+        # config options
+        self.MIN_MAX_WORD_LEN = 3
+        self.MIN_MAX_ABBR_LEN = 2
+        self.MAX_WORD_LEN = 13
+        self.MIN_WORD_LEN = 4
+        self.MIN_ABBR_LEN = 3
+        self.EDIT_DISTANCE_THRESHOLD = 0.5
+        self.MAX_SUBSEQ_LEN = 10
+        self.WORD_MATCH_THRESHOLD = 0.3678
 
         self.us_D = enchant.Dict("en_US")
         self.gb_D = enchant.Dict("en_GB")
@@ -519,31 +535,27 @@ class NLP:
             convert strcmp -> [string, compare]
             getlanguagespecificdata -> [get, language, specific, data]
         """
-
-        MIN_WORD_LEN = 4
-        MIN_ABBR_LEN = 3
         words = []
 
         if self.us_D.check(alpha_chars) or self.gb_D.check(alpha_chars):
             return [ alpha_chars ]
 
         for word in nltk.corpus.words.words():
-            if len(word) >= MIN_WORD_LEN and word in alpha_chars:
+            if len(word) >= self.MIN_WORD_LEN and word in alpha_chars:
                 words.append(word)
 
         ##find abbreviations in words
         for abbr, full_abbr in self.abbreviations.items():
-            if len(abbr) >= MIN_ABBR_LEN and abbr in alpha_chars:
+            if len(abbr) >= self.MIN_ABBR_LEN and abbr in alpha_chars:
                 words.append(abbr)
 
         for word in nltk.corpus.stopwords.words('english'):
-            if len(word) >= MIN_ABBR_LEN and word in alpha_chars:
+            if len(word) >= self.MIN_ABBR_LEN and word in alpha_chars:
                 words.append(word)
 
         ##perform a sequential pass and check for words in dictionary
-        MAX_WORD_LEN = 11
-        for i in range(len(alpha_chars) - MIN_WORD_LEN):
-            for j in range(MIN_WORD_LEN, MAX_WORD_LEN):
+        for i in range(len(alpha_chars) - self.MIN_WORD_LEN):
+            for j in range(self.MIN_WORD_LEN, self.MAX_WORD_LEN):
                 subword = alpha_chars[i:i+j+1]
                 if self.us_D.check(subword) or self.gb_D.check(subword):
                     words.append(subword)
@@ -562,10 +574,10 @@ class NLP:
         if alpha_chars in self.abbreviations:
             me.add(alpha_chars)
 
-        if len(alpha_chars) < min( self.config.analysis.nlp.MIN_MAX_ABBR_LEN, self.config.analysis.nlp.MIN_MAX_WORD_LEN):
+        if len(alpha_chars) < min(self.MIN_MAX_ABBR_LEN, self.MIN_MAX_WORD_LEN):
             return me
 
-        if len(alpha_chars) >= self.config.analysis.nlp.MIN_MAX_WORD_LEN:
+        if len(alpha_chars) >= self.MIN_MAX_WORD_LEN:
             self.enchant_lock.acquire()
             if self.us_D.check(alpha_chars) or self.gb_D.check(alpha_chars):
                 me.add(alpha_chars)
@@ -580,7 +592,7 @@ class NLP:
         return valid_substr_suffix.union( valid_substr_prefix ).union( me )
 
     def find_maximal_length_word(self, alpha_chars):
-        if len(alpha_chars) < self.config.analysis.nlp.MIN_MAX_WORD_LEN:
+        if len(alpha_chars) < self.MIN_MAX_WORD_LEN:
             return ""
 
         self.enchant_lock.acquire()
@@ -681,7 +693,7 @@ class NLP:
 
     def canonical_name(self, name):
         #return '_'.join( self.canonical_set(name) )
-        return '_'.join(NLP.find_label_order(name, self.canonical_set(name)))
+        return '_'.join(SymbolNLP.find_label_order(name, self.canonical_set(name)))
 
     @staticmethod
     def find_label_order(name: str, labels: set):
@@ -747,6 +759,8 @@ class NLP:
         #kv = dict(zip(indexes, llabels))
         return list(indexes[k] for k in sorted(indexes))
 
+
+
     def canonical_set(self, name):
         base_name = self.strip_library_decorations(name)
 
@@ -755,7 +769,7 @@ class NLP:
         numbers_in_name = re.findall(r'[0-9]+', base_name)
 
         ##implement camel case splits
-        ccsplit_subsets = list(map(lambda x: NLP.split_camel_case(x), words_in_name)) 
+        ccsplit_subsets = list(map(lambda x: SymbolNLP.split_camel_case(x), words_in_name)) 
         words_in_name   = reduce(lambda x, y: x | y, ccsplit_subsets, set([]))
         words_in_name   = list(map(lambda x: x.lower(), words_in_name))
 
@@ -769,7 +783,7 @@ class NLP:
             word = words_in_name.pop()
             #print(word)
             ##divide and conquer, only return longest abbreviation 
-            if len(word) >= self.config.analysis.nlp.MAX_STR_LEN_BEFORE_SEQ_SPLIT:
+            if len(word) >= self.MAX_SUBSEQ_LEN:
                 #find large words to split the name first
                 #print("Finding quick subabbrs in {}".format(word))
                 sub_abbrs       = self.quick_subabbreviations(word)
@@ -799,7 +813,7 @@ class NLP:
 
             for subword in words:
                 #print("subword in words: {}".format(subword))
-                if len(subword) > self.config.analysis.nlp.MAX_WORD_LEN:
+                if len(subword) > self.MAX_WORD_LEN:
                     labels.add(subword)
                     continue
 
@@ -827,19 +841,30 @@ class NLP:
         ##minimum token size of 2 characters
         return set(filter(lambda x: len(x) >= 2, labels))
 
+
     def wordnet_similarity(self, a:str, b:str):
+        """
+        Compare two symbol names using WordNet synsets
+        :param a: str symbol name 
+        :param b: str symbol name
+        :return: similarity
+        """
         word_sims = set()
         ac  = self.canonical_set(a)
-        bc  = self.canoncial_set(b)
+        bc  = self.canonical_set(b)
+        outer_scores = []
         for aw, bw in itertools.product(ac, bc):
+            inner_scores = []
             synset_aw   = wn.synsets(aw)
             synset_bw   = wn.synsets(bw)
             for a_ss, b_ss in itertools.product(synset_aw, synset_bw):
                 d = wn.wup_similarity(a_ss, b_ss)
                 word_sims.add(d)
-        return max(word_sims)
+                inner_scores.append(d)
+            if len(inner_scores) > 0:
+                outer_scores.append(max(inner_scores))
 
-
+        return np.mean(outer_scores) if len(outer_scores) > 0 else 0.0
 
 
     def alpha_numeric_set(self, name):
@@ -894,7 +919,7 @@ class NLP:
 
         ### higher is better
         edit_sim =  1.0 - ( float(levehstien_distance) / m )
-        if edit_sim >= self.config.analysis.nlp.EDIT_DISTANCE_THRESHOLD:
+        if edit_sim >= self.EDIT_DISTANCE_THRESHOLD:
             self.logger.debug("Matched on edit distance! {} -> {} : {}".format(inferred_name, correct_name, edit_sim))
             return True
 
@@ -949,13 +974,13 @@ class NLP:
 
         if len(lemmatised_correct) > 0 and len(lemmatised_inferred) > 0:
             jaccard_distance = nltk.jaccard_distance( lemmatised_correct, lemmatised_inferred )
-            if jaccard_distance < self.config.analysis.nlp.WORD_MATCH_THRESHOLD:
+            if jaccard_distance < self.WORD_MATCH_THRESHOLD:
                 self.logger.debug("\tJaccard Distance Lemmatised {} : {} -> {}".format(jaccard_distance, inferred_name, correct_name))
                 return True
 
         if len(stemmed_correct) > 0 and len(stemmed_inferred) > 0:
             jaccard_distance = nltk.jaccard_distance( stemmed_correct, stemmed_inferred )
-            if jaccard_distance < 1.0 - self.config.analysis.nlp.WORD_MATCH_THRESHOLD:
+            if jaccard_distance < 1.0 - self.WORD_MATCH_THRESHOLD:
                 self.logger.debug("\tJaccard Distance Stemmed {} : {} -> {}".format(jaccard_distance, inferred_name, correct_name))
                 return True
 
@@ -1065,7 +1090,10 @@ class SmithWaterman:
 
 
 if __name__ == '__main__':
-    config = classes.config.Config()
-    nlp = NLP(config)
+    nlp = SymbolNLP()
+    nlp.canonical_set('init_networkfile') # { 'init', 'network', 'file' }
+    nlp.wordnet_similarity('freed_network', 'free_networking')
+    nlp.canonical_name('initnetworktruebase')  # 'init_network_true_base'
+    nlp.check_word_similarity('init_network', 'initialised_networked') # True
     import IPython
     IPython.embed()
