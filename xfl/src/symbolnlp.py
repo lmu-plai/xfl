@@ -853,17 +853,21 @@ class SymbolNLP:
         ac  = self.canonical_set(a)
         bc  = self.canonical_set(b)
         outer_scores = []
-        for aw, bw in itertools.product(ac, bc):
-            inner_scores = []
-            synset_aw   = wn.synsets(aw)
-            synset_bw   = wn.synsets(bw)
-            for a_ss, b_ss in itertools.product(synset_aw, synset_bw):
-                d = wn.wup_similarity(a_ss, b_ss)
-                word_sims.add(d)
-                inner_scores.append(d)
-            if len(inner_scores) > 0:
-                outer_scores.append(max(inner_scores))
-
+        for aw in ac:
+            word_scores = []
+            for bw in bc:
+                inner_scores = []
+                synset_aw   = wn.synsets(aw)
+                synset_bw   = wn.synsets(bw)
+                for a_ss, b_ss in itertools.product(synset_aw, synset_bw):
+                    d = wn.wup_similarity(a_ss, b_ss)
+                    word_sims.add(d)
+                    inner_scores.append(d)
+                if len(inner_scores) > 0:
+                    word_scores.append(max(inner_scores))
+            # print(f"word: {aw}, scores: {word_scores}")
+            if len(word_scores) > 0:
+                outer_scores.append(max(word_scores))
         return np.mean(outer_scores) if len(outer_scores) > 0 else 0.0
 
 
