@@ -1039,7 +1039,7 @@ class SmithWaterman:
         """
             Calculates similarity matrix for 2 sequences 
         """
-        H = np.zeros((len(a)+1, len(b)+1), np.int)
+        H = np.zeros((len(a)+1, len(b)+1), int)
 
         for i, j in itertools.product(range(1, H.shape[0]), range(1, H.shape[1])):
             match   = H[i-1, j-1] + self.match_score if a[i-1] == b[j-1] else - self.match_score
