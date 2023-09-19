@@ -516,7 +516,7 @@ class SymbolNLP:
         """
         #perms = itertools.permutations(abbrs)
         #perms = itertools.combinations(abbrs)
-        combs = self._combinations_with_condition(list(abbrs), len(name))
+        combs = self._combinations_with_condition(sorted(abbrs), len(name))
         bscore = -1
         bset = set([])
         for comb in combs:
@@ -563,7 +563,7 @@ class SymbolNLP:
         return set(words)
 
 
-    def find_subabbreviations(self, alpha_chars):
+    def find_subabbreviations(self, alpha_chars) -> set[str]:
         """
             convert strcmp -> [string, compare]
             getlanguagespecificdata -> [get, language, specific, data]
