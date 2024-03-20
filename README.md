@@ -1,15 +1,16 @@
 # XFL: Naming Functions in Binaries with Extreme Multi-label Learning
 
-This repository will contain the code accompanying the paper [_XFL: Naming Functions in Binaries with Extreme Multi-label Learning_](https://arxiv.org/abs/2107.13404) by James Patrick-Evans, Moritz Dannehl and Johannes Kinder, which will be presented at the [IEEE Symposium on Security & Privacy 2023](https://sp2023.ieee-security.org/index.html). 
+This repository contains the code accompanying the paper [_XFL: Naming Functions in Binaries with Extreme Multi-label Learning_](https://arxiv.org/abs/2107.13404) by James Patrick-Evans, Moritz Dannehl and Johannes Kinder, which has been presented at the [IEEE Symposium on Security & Privacy 2023](https://sp2023.ieee-security.org/index.html). 
 
 ## Overview
 
-The repository currently contains the following components:
+The repository consists of the following components:
 
-* `lm/` Language model for generation function names from lists of predicted tokens
-* `xfl/` Partial source code and full experiment data used in our paper
+* `xfl/` Partial source code of the implementation used for the paper, including full experiment data and logs.
+* `xfl-r/` A refactored version of the original source code to simplify configuration and deployment (recommended).
+* `lm/` The Language model for generating function names from lists of tokens predicted by XFL, as described in Section VI of the paper.
 
-To generate embeddings from symbols in binaries as a service, please use the [reait](https://github.com/RevEngAI/reait) tool.
+RevEng.AI offers a service to generate embeddings from symbols in binaries using the [reait](https://github.com/RevEngAI/reait) tool.
 
 
 ## Citation

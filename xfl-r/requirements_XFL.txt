@@ -1,0 +1,3 @@
+# platform: debian
+python=3.8.*
+pip=22.1.2

@@ -1,3 +1,18 @@
+
+"""
+
+Copyright 2017-2024 by James Patrick-Evans, Moritz Dannehl, and Johannes Kinder.
+
+This file is part of XFL.
+
+XFL is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+XFL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with XFL. If not, see <https://www.gnu.org/licenses/>. 
+
+"""
+
 import context
 from classes.config import Config
 from classes.callgraph import Callgraph
