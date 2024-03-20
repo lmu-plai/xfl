@@ -531,7 +531,7 @@ class SymbolNLP:
         """
         #perms = itertools.permutations(abbrs)
         #perms = itertools.combinations(abbrs)
-        combs = self._combinations_with_condition(list(abbrs), len(name))
+        combs = self._combinations_with_condition(sorted(abbrs), len(name))
         bscore = -1
         bset = set([])
         for comb in combs:
@@ -578,7 +578,7 @@ class SymbolNLP:
         return set(words)
 
 
-    def find_subabbreviations(self, alpha_chars):
+    def find_subabbreviations(self, alpha_chars) -> set[str]:
         """
             convert strcmp -> [string, compare]
             getlanguagespecificdata -> [get, language, specific, data]
@@ -868,17 +868,21 @@ class SymbolNLP:
         ac  = self.canonical_set(a)
         bc  = self.canonical_set(b)
         outer_scores = []
-        for aw, bw in itertools.product(ac, bc):
-            inner_scores = []
-            synset_aw   = wn.synsets(aw)
-            synset_bw   = wn.synsets(bw)
-            for a_ss, b_ss in itertools.product(synset_aw, synset_bw):
-                d = wn.wup_similarity(a_ss, b_ss)
-                word_sims.add(d)
-                inner_scores.append(d)
-            if len(inner_scores) > 0:
-                outer_scores.append(max(inner_scores))
-
+        for aw in ac:
+            word_scores = []
+            for bw in bc:
+                inner_scores = []
+                synset_aw   = wn.synsets(aw)
+                synset_bw   = wn.synsets(bw)
+                for a_ss, b_ss in itertools.product(synset_aw, synset_bw):
+                    d = wn.wup_similarity(a_ss, b_ss)
+                    word_sims.add(d)
+                    inner_scores.append(d)
+                if len(inner_scores) > 0:
+                    word_scores.append(max(inner_scores))
+            # print(f"word: {aw}, scores: {word_scores}")
+            if len(word_scores) > 0:
+                outer_scores.append(max(word_scores))
         return np.mean(outer_scores) if len(outer_scores) > 0 else 0.0
 
 
@@ -1054,7 +1058,7 @@ class SmithWaterman:
         """
             Calculates similarity matrix for 2 sequences 
         """
-        H = np.zeros((len(a)+1, len(b)+1), np.int)
+        H = np.zeros((len(a)+1, len(b)+1), int)
 
         for i, j in itertools.product(range(1, H.shape[0]), range(1, H.shape[1])):
             match   = H[i-1, j-1] + self.match_score if a[i-1] == b[j-1] else - self.match_score
