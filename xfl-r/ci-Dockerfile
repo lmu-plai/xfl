@@ -22,7 +22,7 @@ COPY XFL/res/* /XFL/res/
 
 RUN mkdir /Tables/
 
-COPY db/Tables/* /Tables/
+COPY ci-db/Tables/* /Tables/
 
 WORKDIR /XFL
 
