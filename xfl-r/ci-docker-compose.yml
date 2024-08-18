@@ -5,6 +5,7 @@ services:
       dockerfile: ci-Dockerfile
     image: xfl-image:latest
     environment:
+      TABLES_DIR: /Tables/
       POSTGRES_HOST: postgres_host
     depends_on:
       postgres_host:

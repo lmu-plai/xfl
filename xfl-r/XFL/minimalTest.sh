@@ -2,8 +2,9 @@
 
 export PGPASSWORD='123';
 POSTGRES_HOST=${POSTGRES_HOST:-localhost}
+TABLES_DIR=${TABLES_DIR:-../Tables/}
 dropdb -h "$POSTGRES_HOST" -U desyl -p 5432  xfl
-pg_restore --create -h "$POSTGRES_HOST" -U desyl -d postgres  -p 5432 ../Tables/minimalExample.pgsql -v
+pg_restore --create -h "$POSTGRES_HOST" -U desyl -d postgres  -p 5432 "$TABLES_DIR/minimalExample.pgsql" -v
 
 python3 genExp.py
 python3 dexter.py -d=minimal-test -learn -dim=20 -subDim=40 -epochs=10 -batchSize=64

@@ -1,5 +1,5 @@
 **
-!db/Tables/**
+!ci-db/Tables/**
 !XFL/*.py
 !ci-requirements.txt
 !XFL/*.sh
