@@ -1,0 +1,22 @@
+services:
+  xfl_host:
+    build: .
+    image: xfl-image:latest
+    environment:
+      POSTGRES_HOST: postgres_host
+    depends_on:
+      postgres_host:
+        condition: service_healthy
+
+
+  postgres_host:
+    build: db/
+    image: xfl-postgres:latest
+    environment:
+      POSTGRES_USER: desyl
+      POSTGRES_PASSWORD: 123
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "desyl"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
