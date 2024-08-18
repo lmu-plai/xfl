@@ -1,9 +1,7 @@
 #!/bin/sh
 
-
-grep '' res/minimal-test/*.log
-
 export PGPASSWORD='123';
+POSTGRES_HOST=${POSTGRES_HOST:-localhost}
 dropdb -h "$POSTGRES_HOST" -U desyl -p 5432  xfl
 pg_restore --create -h "$POSTGRES_HOST" -U desyl -d postgres  -p 5432 ../Tables/minimalExample.pgsql -v
 

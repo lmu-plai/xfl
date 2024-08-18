@@ -1,6 +1,8 @@
 services:
   xfl_host:
-    build: .
+    build:
+      context: .
+      dockerfile: ci-Dockerfile
     image: xfl-image:latest
     environment:
       POSTGRES_HOST: postgres_host
@@ -10,7 +12,7 @@ services:
 
 
   postgres_host:
-    build: db/
+    build: ci-db/
     image: xfl-postgres:latest
     environment:
       POSTGRES_USER: desyl

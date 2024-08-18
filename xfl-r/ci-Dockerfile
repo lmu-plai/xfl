@@ -1,0 +1,29 @@
+FROM ubuntu_and_ghidra:latest
+
+RUN unzip /opt/ghidra_10.4_PUBLIC_20230928.zip -d /opt/
+
+RUN mv /opt/ghidra_10.4_PUBLIC /opt/ghidra
+
+RUN apt-get -y update && apt-get -y install zip tar python3-dev graphviz libgraphviz-dev pkg-config openjdk-17-jdk libenchant-2-2 postgresql-client
+
+COPY ci-requirements.txt /requirements.txt
+
+RUN pip install -r /requirements.txt --no-dependencies
+
+RUN python -c 'import nltk; nltk.download("words"); nltk.download("stopwords")'
+
+COPY XFL/*.py /XFL/
+
+COPY XFL/*.sh  /XFL/
+
+COPY XFL/ci-desyl.conf /XFL/desyl.conf
+
+COPY XFL/res/* /XFL/res/
+
+RUN mkdir /Tables/
+
+COPY db/Tables/* /Tables/
+
+WORKDIR /XFL
+
+ENTRYPOINT ./minimalTest.sh

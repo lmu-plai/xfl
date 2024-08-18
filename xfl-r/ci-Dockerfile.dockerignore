@@ -1,0 +1,9 @@
+**
+!db/Tables/**
+!XFL/*.py
+!ci-requirements.txt
+!XFL/*.sh
+!XFL/*.conf
+!XFL/res/**
+XFL/res/xml_model
+XFL/res/xml_model_hash
