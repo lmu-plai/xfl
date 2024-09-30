@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 """
 
@@ -13,6 +14,8 @@ You should have received a copy of the GNU General Public License along with XFL
 
 """
 
+=======
+>>>>>>> a8ae271 (Adding refactoring)
 from config import Config
 from database import PostgresDB
 
