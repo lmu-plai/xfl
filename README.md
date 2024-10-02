@@ -7,10 +7,13 @@ This repository contains the code accompanying the paper [_XFL: Naming Functions
 The repository consists of the following components:
 
 * `xfl/` Partial source code of the implementation used for the paper, including full experiment data and logs.
-* `xfl-r/` A refactored version of the original source code to simplify configuration and deployment (recommended).
+* `xfl-r/` A refactored version of the original source code to simplify configuration and deployment. **(highly recommended)**
 * `lm/` The Language model for generating function names from lists of tokens predicted by XFL, as described in Section VI of the paper.
 
 RevEng.AI offers a service to generate embeddings from symbols in binaries using the [reait](https://github.com/RevEngAI/reait) tool.
+
+> [!IMPORTANT]
+> XFL-R, our refactored version of XFL, is highly recommended for conducting a scientific comparison.
 
 
 ## Citation
