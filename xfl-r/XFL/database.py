@@ -237,7 +237,7 @@ class PostgresDB():
     def binary_functions_names(self, binary):
         symbols = []
 
-        curr = self.conn.cursor()                
+        curr = self.conn.cursor()
         curr.execute("""
             SELECT binaries.id , functions.id, functions.name, functions.real_name
             FROM functions 
@@ -249,6 +249,29 @@ class PostgresDB():
         for r in curr.fetchall():
             (bId, fId, name, real_name) = r
             symbols += [[bId, fId, name, real_name]]
+
+        return symbols
+
+    def binary_functions_blens_info(self, binary, inference_mode=False):
+        symbols = []
+
+        curr = self.conn.cursor()
+        req = """
+            SELECT binaries.id , functions.id, functions.name, functions.real_name, functions.vaddr
+            FROM functions 
+            LEFT JOIN binaries
+            ON binary_id=binaries.id 
+            WHERE binaries.path = %s
+            """
+        if inference_mode == False:
+            req += " AND functions.binding = 'GLOBAL';"
+        else:
+            req += ";"
+        curr.execute(req, (binary,))
+
+        for r in curr.fetchall():
+            (bId, fId, name, real_name, vaddr) = r
+            symbols += [[bId, fId, name, real_name, vaddr]]
 
         return symbols
 
@@ -474,6 +497,5 @@ class PostgresDB():
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             );
         """, (binId, *l))
-        #return curr.fetchall()[0][0]
 
             

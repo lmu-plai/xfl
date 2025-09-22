@@ -49,7 +49,8 @@ parser.add_argument('-learn', '--learn', action='store_true', help='Learn model 
 parser.add_argument('-validate', '--validate', action='store_true', help='Show best epoch with validation data')
 parser.add_argument('-exportEpoch', '--export-epoch', default=0, type=int, help='Export embeddings using the given epoch')
 parser.add_argument('-newSplit', '--new-split', action='store_true', help='When exporting, prepare a new train-val-test split (useful for using pretrained models)')
-
+parser.add_argument('-inferenceMode', '--inference-mode', action='store_true', help='When exporting, prepare a new test split containing everything (useful for using pretrained models)')
+parser.add_argument('-blensNlpMode', '--blens-nlp-mode', action='store_true', help='When exporting, compute the nlpData with the format accepted by BLens')
 
 # Hyperparameters
 parser.add_argument('-lr', '--learning-rate', default=1e-4, type=float)
@@ -90,7 +91,7 @@ if args.verbose:
 	conf.logger.setLevel(logging.INFO)
 
 if int(args.learn) + int(args.validate) + int(args.export_epoch > 0) != 1: 
-	conf.logger.critical("Enter either learn, validate, or export_epoch!")
+	conf.logger.critical("Enter either learn, validate, or an export method!")
 	exit()
 
 exp = Experiment(conf)
@@ -141,6 +142,8 @@ elif (args.validate or args.export_epoch > 0): # Load prevous parameters
 	argsD["validate"] = args.validate	
 	argsD["export_epoch"] = args.export_epoch
 	argsD["new_split"] = args.new_split
+	argsD["inference_mode"] = args.inference_mode
+	argsD["blens_nlp_mode"] = args.blens_nlp_mode
 	argsD["batch_size"] = args.batch_size
 	
 	with open(directory + "/argsD", "wb") as f:			
@@ -204,6 +207,7 @@ out_dim             = in_dim
 checkpoint_path       = directory + "/checkpoint.{}.ckpt"
 embeddings_path       = directory + "/embeddings"
 nlp_path              = directory + "/nlpData"
+
 epoch_batches         = argsD["epoch_batches"]
 save_freq             = argsD["save_freq"]
 epochs                = argsD["epochs"]
@@ -270,6 +274,50 @@ elif argsD["validate"]:
 		conf.logger.info("[+] Epoch: {}, Loss: {}".format(epoch, lossS))
 
 elif argsD["export_epoch"] > 0:
+
+	exp.pdb.connect()	
+
+	conf.logger.info("About to save names for experiments...")
+	nlp	= NLP.NLP(conf)
+
+	exportedEmbeddings = {}
+
+	if argsD["new_split"]:
+		exp.train_val_test_split()
+		exp.save_settings(directory)
+
+	if argsD["inference_mode"]:
+		nlpData = [[],[],[]]
+		for path in tqdm(exp.pdb.binary_paths_from_ids(exp.pdb.binary_ids())):		
+			for [bId, fId, name, real_name, vaddr] in exp.pdb.binary_functions_blens_info(path, inference_mode=True):
+				exportedEmbeddings[fId] = True
+				# BLens
+				if argsD["blens_nlp_mode"]:
+					nlpData[-1] += [[path, vaddr, real_name, name,  vaddr, bId, fId]]
+					continue
+				# XFL
+				canonSet, canonName = nlp.canonical_set_name(name)		
+				dataS += [[path, bId, fId, name, real_name, canonSet, canonName]]
+				
+	else:	
+		nlpData = []
+		for split in [exp.training_binary_ids, exp.validation_binary_ids, exp.testing_binary_ids]:
+			dataS = []
+			for path in tqdm(exp.pdb.binary_paths_from_ids(split)):		
+				for [bId, fId, name, real_name, vaddr] in exp.pdb.binary_functions_blens_info(path):
+					exportedEmbeddings[fId] = True
+					# BLens
+					if argsD["blens_nlp_mode"]:
+						dataS += [[path, vaddr, real_name, name,  vaddr, bId, fId]]
+						continue
+					# XFL
+					canonSet, canonName = nlp.canonical_set_name(name)		
+					dataS += [[path, bId, fId, name, real_name, canonSet, canonName]]
+			nlpData += [dataS]
+
+	with open(nlp_path, "wb") as f:
+		pickle.dump(nlpData, f)
+
 	conf.logger.info("About to save embeddings from autoencoder...")
 	weightsPath = checkpoint_path.format(checkpoint)
 	epoch = int(checkpoint / epoch_batches)
@@ -282,27 +330,12 @@ elif argsD["export_epoch"] > 0:
 		Y    = Y.numpy()
 		fIdS = list(fIdS.numpy())
 		for i, fId in enumerate(fIdS):
-			embeddings[int(fId)] = np.squeeze(Y[i])
+			fId = int(fId)
+			if fId in exportedEmbeddings:
+				embeddings[fId] = np.squeeze(Y[i])
 	with open(embeddings_path, "wb") as f:
-		pickle.dump(embeddings, f)
+		pickle.dump(embeddings, f)	
 
-	
-	exp.pdb.connect()	
-	
-	if argsD["new_split"]:
-		exp.train_val_test_split()
-		exp.save_settings(directory)
 
-	conf.logger.info("About to save names for experiments...")
-	nlp	= NLP.NLP(conf)
-	nlpData = []
-	for split in [exp.training_binary_ids, exp.validation_binary_ids, exp.testing_binary_ids]:
-		dataS = []
-		for path in tqdm(exp.pdb.binary_paths_from_ids(split)):		
-			for [bId, fId, name, real_name] in exp.pdb.binary_functions_names(path):
-				canonSet, canonName = nlp.canonical_set_name(name)				
-				dataS += [[path, bId, fId, name, real_name, canonSet, canonName]]
-		nlpData += [dataS]
 
-	with open(nlp_path, "wb") as f:
-		pickle.dump(nlpData, f)
+conf.logger.critical("Ignore the following errors")
