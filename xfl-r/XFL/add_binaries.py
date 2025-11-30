@@ -33,11 +33,11 @@ from joblib import Parallel, delayed
 
 #1 1/2 hour timeout
 @timeout_decorator.timeout(5400)
-def analyse_binary(c, bin_path, debug=False):
+def analyse_binary(c, bin_path, debug=False, mandatory_libraries=False):
     c.logger.info("Analysing binary {}".format(bin_path))
 
     try:
-        b = Binary(c, path=bin_path, must_resolve_libs=True, linkage="dynamic")
+        b = Binary(c, path=bin_path, must_resolve_libs=mandatory_libraries, linkage="dynamic")
 
         if b.arch != "x86_64":
             c.logger.warning(f"Binary {bin_path} ISA is not currently supported")
@@ -122,24 +122,24 @@ def collect_binaries(config, d):
     return bins
 
 # analyse binaries, sorted by size
-def analysis(config, bins, debug, fast):
+def analysis(config, bins, debug, fast, mandatory_libraries):
     config.logger.critical("[+] Analysing {} binaries".format(len(bins)) )
     bins.sort(key=lambda x:x[0])
     bins = [x[1] for x in bins]
     bins.reverse()
     if fast:
-        Parallel(n_jobs=config.analysis.THREAD_POOL_THREADS)( delayed(analyse_binary)(config, f, debug=False) for f in bins )
+        Parallel(n_jobs=config.analysis.THREAD_POOL_THREADS)( delayed(analyse_binary)(config, f, debug=False, mandatory_libraries=mandatory_libraries) for f in bins )
     else:
         for f in bins:
-            analyse_binary(config, f, debug=debug)
+            analyse_binary(config, f, debug=debug, mandatory_libraries=mandatory_libraries)
 
 # recursively find binaries and analyse symbols
-def analyse_from_directory(config, d, debug=False, fast=False):    
+def analyse_from_directory(config, d, debug=False, fast=False, mandatory_libraries=False):    
     bins = collect_binaries(config, d)
-    analysis(config, bins, debug, fast)
+    analysis(config, bins, debug, fast, mandatory_libraries)
 
 # get binaries from files and analyse symbols
-def analyse_from_file(config, path, debug=False, fast=False):
+def analyse_from_file(config, path, debug=False, fast=False, mandatory_libraries=False):
     FAILED_FILES = [
         '/dbg_elf_bins/eliom/usr/bin/eliomcp',
         '/dbg_elf_bins/binutils-msp430/usr/bin/msp430-nm'
@@ -162,7 +162,7 @@ def analyse_from_file(config, path, debug=False, fast=False):
             config.logger.exception(e)
             if debug:
                 raise e
-    analysis(config, bins, debug, fast)
+    analysis(config, bins, debug, fast, mandatory_libraries)
 
 if __name__ == "__main__":
     config = Config(level=logging.INFO)
@@ -173,7 +173,8 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--path')
     parser.add_argument('--debug', action='store_true', help='Debug mode. Do not ignore errors or undefined behavior.')
     parser.add_argument('--fast', action='store_true' , help='Multiple processes enable.')
-    
+    parser.add_argument('--mandatory_libraries', action='store_true' , help='Must revolve libraries.')
+
     args = parser.parse_args()
 
     if args.verbose:
@@ -188,10 +189,10 @@ if __name__ == "__main__":
 
     if args.from_file:
         config.logger.critical("[+] Analsing binaries from file {} with {} processes".format(args.from_file, config.analysis.THREAD_POOL_THREADS * args.fast) )
-        analyse_from_file(config, args.from_file, debug=args.debug, fast=args.fast)
+        analyse_from_file(config, args.from_file, debug=args.debug, fast=args.fast, mandatory_libraries=args.mandatory_libraries)
 
     elif args.path:
         config.logger.critical("[+] Analsing binaries in {} with {} processes".format(args.path, config.analysis.THREAD_POOL_THREADS * args.fast) )
-        analyse_from_directory(config, args.path, debug=args.debug, fast=args.fast)
+        analyse_from_directory(config, args.path, debug=args.debug, fast=args.fast, mandatory_libraries=args.mandatory_libraries)
 
     print("Done. Bye!")

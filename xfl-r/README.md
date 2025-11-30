@@ -41,7 +41,7 @@ rm functions.pck
 
 ### Step 1: Identify Dynamic Calls
 
-If all dynamic calls are not in our collection, you need to find the corresponding libraries and analyze them.
+If all dynamic calls are not in our collection, you should find the corresponding libraries and analyze them.
 
 ```shell
 conda activate XFL
@@ -54,7 +54,7 @@ python3 add_libraries.py PATH_TO_YOUR_LIBRARIES
 Preprocess your own binaries, which can be time-consuming.
 
 ```shell
-python3 add_binaries.py --p PATH_TO_YOUR_DATASET --fast
+python3 add_binaries.py --p PATH_TO_YOUR_DATASET --fast --mandatory_libraries
 ```
 
 ### Step 3: Experiment Configuration
@@ -116,14 +116,6 @@ python3 pfastreXML.py -d=minimal-test -l=1024 -trees=60
 ```
 
 ### Pretrained XFL Models
-
-If all dynamic call prototypes are not in our collection, you need to find the corresponding libraries and analyze them.
-
-```shell
-conda activate XFL
-cd XFL/
-python3 add_libraries.py PATH_TO_YOUR_LIBRARIES
-```
 
 Preprocess binaries:
 
